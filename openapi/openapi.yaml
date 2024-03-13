@@ -1,0 +1,211 @@
+openapi: '3.0.2'
+info:
+  title: Signing Service
+  description: Service to handle signature devices and signing transaction
+  contact:
+    name: Riccardo Caselli
+  version: '1.0'
+servers:
+  - url: http://127.0.0.1:8080/api/v1
+tags:
+  - name: Device
+    description: "Signing device operations"
+paths:
+  /device:
+    get:
+      operationId: listDevices
+      summary: "List devices"
+      description: "Lists all available devices, returning id and label"
+      tags:
+        - Device
+      responses:
+        '200':
+          description: List of devices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DeviceSummary"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+                
+    post:
+      operationId: createDevice
+      summary: Create a new signature device
+      description: Create a new signature device, providing signature algorithm (RSA or ECC) and an optional label
+      tags:
+        - Device
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeviceRequest"
+      responses:
+        '200':
+          description: Created device
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeviceResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /device/{deviceid}:
+    get:
+      operationId: getDevice
+      tags:
+        - Device
+      summary: "Get device"
+      description: "Retrieves a device by ID"
+      parameters:
+        - name: deviceid
+          in: path
+          description: 'The device id to fetch'
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Created device
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeviceResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          
+  /device/{deviceid}/signature:
+    post:
+      operationId: signTransaction
+      summary: "Sign a transaction"
+      description: "Creates a signature using the provided device"
+      tags:
+      - Device
+      parameters:
+        - name: deviceid
+          in: path
+          description: 'The device id to fetch'
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignatureRequest"
+      responses:
+        '200':
+          description: Signature
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SignatureResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+      
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: string
+            example: "Error occured..."
+    DeviceSummary:
+      description: "Summary response containing device identifiers"
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 695c8511-6b05-463c-b485-95823774e41a
+        label:
+          type: string
+          example: "mydevice"
+      required:
+        - id
+    DeviceRequest:
+      description: "Request object to create a signature device"
+      type: object
+      properties:
+        signatureAlgorithm:
+          nullable: false
+          type: string
+          enum:
+            - RSA
+            - ECC
+        label:
+          type: string
+          nullable: true
+      required:
+        - signatureAlgorithm
+    DeviceResponse:
+      description: "Represents a full device"
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 695c8511-6b05-463c-b485-95823774e41a
+        label:
+          type: string
+          example: "mydevice"
+        signatureAlgorithm:
+          type: string
+          enum:
+            - RSA
+            - ECC
+        counter:
+          type: integer
+          minimum: 0
+        lastSignature:
+          type: string
+        publicKey:
+          type: string
+      required:
+        - id
+        - signatureAlgorithm
+        - counter
+        - lastSignature
+        - publicKey
+    SignatureRequest:
+      type: object
+      properties:
+        dataToBeSigned:
+          type: string
+          nullable: false
+      required:
+        - dataToBeSigned
+    SignatureResponse:
+      type: object
+      properties:
+        signature:
+          type: string
+        signedData:
+          type: string
+      required:
+        - signature
+        - signedData

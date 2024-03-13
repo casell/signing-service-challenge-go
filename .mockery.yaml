@@ -1,0 +1,16 @@
+with-expecter: true
+inpackage: false
+exclude:
+- generated/
+- mocks/
+packages:
+  github.com/casell/signing-service-challenge/persistence:
+    interfaces:
+      Storage:
+  github.com/casell/signing-service-challenge/domain:
+    interfaces:
+      SigningDevice:
+      SigningDeviceFactory:
+  github.com/casell/signing-service-challenge/crypto:
+    interfaces:
+      KeyPair:
